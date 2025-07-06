@@ -1,0 +1,13 @@
+flask
+flask-Cors
+pandas
+numpy
+requests
+python-dotenv
+dotenv
+# If you plan to use OpenAI directly (instead of Gemini via requests)
+# openai
+# For Gurobi, ensure it's installed and licensed on your system,
+# then `gurobipy` should be available. It's not typically installed via pip directly
+# unless you have a specific Gurobi pip wheel.
+# gurobipy # Uncomment if you install it this way
