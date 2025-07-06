@@ -11,18 +11,36 @@ const QuestionForm = ({
 }) => {
   const [answer, setAnswer] = useState(() => {
     // Initialize state from local storage or previous session if available
-    return (
-      localStorage.getItem(`answer_${question.key}`) ||
-      (question.type === "multiselect" ? [] : "")
-    );
+    const stored = localStorage.getItem(`answer_${question.key}`);
+    if (question.type === "multiselect") {
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return [];
+        }
+      }
+      return [];
+    }
+    return stored || "";
   });
 
   useEffect(() => {
     // Update answer when question changes
-    setAnswer(
-      localStorage.getItem(`answer_${question.key}`) ||
-        (question.type === "multiselect" ? [] : "")
-    );
+    const stored = localStorage.getItem(`answer_${question.key}`);
+    if (question.type === "multiselect") {
+      if (stored) {
+        try {
+          setAnswer(JSON.parse(stored));
+        } catch {
+          setAnswer([]);
+        }
+      } else {
+        setAnswer([]);
+      }
+    } else {
+      setAnswer(stored || "");
+    }
   }, [question]);
 
   const handleChange = (e) => {
@@ -32,15 +50,11 @@ const QuestionForm = ({
         (option) => option.value
       );
       setAnswer(value);
+      localStorage.setItem(`answer_${question.key}`, JSON.stringify(value));
     } else {
       setAnswer(e.target.value);
+      localStorage.setItem(`answer_${question.key}`, e.target.value);
     }
-    localStorage.setItem(
-      `answer_${question.key}`,
-      Array.isArray(e.target.value)
-        ? JSON.stringify(e.target.value)
-        : e.target.value
-    );
   };
 
   const handleSubmit = (e) => {
@@ -56,7 +70,7 @@ const QuestionForm = ({
       </h3>
       <p>{question.question}</p>
       {question.type === "selectbox" && (
-        <select value={answer} onChange={handleChange}>
+        <select value={Array.isArray(answer) ? "" : answer} onChange={handleChange}>
           <option value="">Select an option</option>
           {question.options.map((opt) => (
             <option key={opt} value={opt}>
@@ -66,7 +80,7 @@ const QuestionForm = ({
         </select>
       )}
       {question.type === "multiselect" && (
-        <select multiple={true} value={answer} onChange={handleChange}>
+        <select multiple={true} value={Array.isArray(answer) ? answer : []} onChange={handleChange}>
           {question.options.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
@@ -77,14 +91,14 @@ const QuestionForm = ({
       {question.type === "text_input" && (
         <input
           type="text"
-          value={answer}
+          value={Array.isArray(answer) ? "" : answer}
           onChange={handleChange}
           placeholder="Your answer"
         />
       )}
       {question.type === "textarea" && (
         <textarea
-          value={answer}
+          value={Array.isArray(answer) ? "" : answer}
           onChange={handleChange}
           placeholder="Please provide details"
           rows="4"

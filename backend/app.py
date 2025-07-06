@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, make_response
 from flask_cors import CORS
 import pandas as pd
 import numpy as np
@@ -21,20 +21,28 @@ except ImportError:
     Model = None
     print("Warning: Gurobipy not found. Optimization functions will be disabled.")
 
-
 # Load environment variables from .env file
 load_dotenv()
 
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_strong_secret_key_here'
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+CORS(app, origins=[
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174"
+], supports_credentials=True)
+
+# Handle preflight OPTIONS requests
+
 
 # --- CONFIGURATION ---
 CONFIG = {
     "GEMINI_API_KEY": os.getenv("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY"),
-    "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY"), # Add for OpenAI
+    "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_API_KEY"),
     "MAX_RETRIES": 3,
-    "TIMEOUT": 60 # Increased timeout for potential long AI/Gurobi calls
+    "TIMEOUT": 60
 }
 
 # --- Session Management (Simplified for this example) ---
@@ -53,6 +61,7 @@ def get_session_data(session_id):
             "problem_type": None,
             "optimization_results": None,
             "ai_explanation": None,
+            "questions_completed": False,
             "chat_history": [{"role": "bot", "content": "Hello! I'm your AI Business Optimization Assistant. Let's start by understanding your business."}]
         }
     return user_sessions[session_id]
@@ -198,7 +207,7 @@ def identify_problem_and_generate_code(session_data):
         # def solve_optimization(data):
         #     # Gurobi model setup and solve
         #     # ...
-        #     return {"objective_value": model.ObjVal, "variables": {...}}
+        #     return {{"objective_value": model.ObjVal, "variables": {{...}}}}
         ```
         ```
 
@@ -311,6 +320,7 @@ def extract_problem_type(response_content):
 @app.route('/')
 def index():
     return "Backend is running!"
+
 
 @app.route('/api/init_session', methods=['GET'])
 def init_session():

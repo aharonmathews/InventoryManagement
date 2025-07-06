@@ -111,7 +111,7 @@ function App() {
   const [error, setError] = useState(null);
   const [followUpQuestion, setFollowUpQuestion] = useState("");
 
-  const BACKEND_URL = "http://localhost:5000/api"; // Ensure this matches your Flask port
+  const BACKEND_URL = "http://localhost:5000/api";
 
   // Initialize session when component mounts
   useEffect(() => {
@@ -163,6 +163,7 @@ function App() {
       const response = await fetch(`${BACKEND_URL}/submit_answer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           session_id: sessionId,
           question_key: question.key,
@@ -237,6 +238,7 @@ function App() {
       const response = await fetch(`${BACKEND_URL}/start_optimization`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ session_id: sessionId }),
       });
       const data = await response.json();
