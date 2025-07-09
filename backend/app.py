@@ -9,6 +9,7 @@ import io
 import os
 import sys
 from dotenv import load_dotenv
+from PyPDF2 import PdfReader
 
 # Import gurobipy if installed. This will not run if Gurobi is not set up correctly.
 try:
@@ -369,6 +370,27 @@ def submit_answer():
     return jsonify(response_data)
 
 
+@app.route('/api/upload_pdf', methods=['POST'])
+def upload_pdf():
+    session_id = request.form.get('session_id')
+    session = get_session_data(session_id)
+    if 'file' not in request.files:
+        return jsonify({"status": "error", "message": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '' or not file.filename.endswith('.pdf'):
+        return jsonify({"status": "error", "message": "No selected PDF file"}), 400
+    try:
+        reader = PdfReader(file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() or ""
+        # Store PDF text in session for context
+        session["pdf_context"] = text
+        session["chat_history"].append({"role": "user", "content": f"Uploaded PDF: {file.filename}"})
+        session["chat_history"].append({"role": "bot", "content": "✅ PDF uploaded and processed for context."})
+        return jsonify({"status": "success", "chat_history": session["chat_history"]})
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Error reading PDF: {str(e)}"}), 400
 
 @app.route('/api/upload_data', methods=['POST'])
 def upload_data():
